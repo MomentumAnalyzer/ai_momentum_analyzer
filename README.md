@@ -90,7 +90,7 @@ The daily holdings agent can start from a pasted screenshot. A read-only E*TRADE
 
 On the Actions tab, run **Release** and choose `minor` or `major`. The workflow is on `main`. From `0.1.0`, minor becomes `0.2.0` and major becomes `1.0.0`.
 
-The run creates branch `release/vX.Y.Z`, commits that version in `pyproject.toml`, builds one wheel, and attaches it to the GitHub Release `vX.Y.Z`. It also opens a pull request into `main`.
+The run creates branch `release/vX.Y.Z`, commits that version in `pyproject.toml`, builds one wheel, and attaches it to the GitHub Release `vX.Y.Z`. It opens a pull request into `main` when the repository allows Actions to create pull requests. Otherwise the release still succeeds, and the log has a compare link for opening that pull request by hand.
 
 ```bash
 pip install https://github.com/pranayVyas/ai_momentum_analyzer/releases/download/vX.Y.Z/ai_momentum_analyzer-X.Y.Z-py3-none-any.whl
