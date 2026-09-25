@@ -76,9 +76,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh pr create \
+          set +e
+          pr_url="$(gh pr create \
             --repo "${GITHUB_REPOSITORY}" \
             --base main \
             --head "release/v${VERSION}" \
             --title "Release v${VERSION}" \
-            --body "Bumps the package version to ${VERSION}. The wheel is attached to the v${VERSION} GitHub release."
+            --body "Bumps the package version to ${VERSION}. The wheel is attached to the v${VERSION} GitHub release." 2>&1)"
+          status=$?
+          set -e
+          if [ "${status}" -eq 0 ]; then
+            echo "${pr_url}"
+            exit 0
+          fi
+          echo "${pr_url}"
+          echo "Could not open the pull request with the Actions token."
+          echo "The release and wheel are already published."
+          echo "Open it here: https://github.com/${GITHUB_REPOSITORY}/compare/main...release/v${VERSION}?expand=1"
+          echo "To let later runs open the pull request, enable Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests."
