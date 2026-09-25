@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "tradingwiser": {
+      "command": "tradingwiser-mcp",
+      "env": {
+        "TRADINGWISER_SECRETS_FILE": "/home/you/.config/ai-momentum-analyzer/secrets.json"
+      }
+    }
+  }
+}

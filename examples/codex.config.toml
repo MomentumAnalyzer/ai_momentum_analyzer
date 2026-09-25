@@ -1,0 +1,8 @@
+# Written by `ai-momentum-analyzer install mcp --client codex`.
+# The password lives in the secrets file, not here.
+
+[mcp_servers.tradingwiser]
+command = "tradingwiser-mcp"
+
+[mcp_servers.tradingwiser.env]
+TRADINGWISER_SECRETS_FILE = "/home/you/.config/ai-momentum-analyzer/secrets.json"
