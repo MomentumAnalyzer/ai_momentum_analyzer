@@ -1,0 +1,22 @@
+Copyright (c) 2026 Pranay Vyas. All rights reserved.
+
+Trading Wiser and Momentum Analyzer are private systems. This package — its
+MCP servers, agent instructions, and related files — is proprietary. No
+license is granted to copy, modify, sublicense, or distribute it except by
+the copyright holder.
+
+Access is not public. Only a person who has been explicitly onboarded and
+approved by the operator may use these MCP servers or agents to reach Trading
+Wiser or Momentum Analyzer. Possession of this package, a wheel, or a client
+config does not grant that approval.
+
+Approved use is limited to the tools those servers expose, under the
+credentials the operator issued to that person. Those credentials are personal.
+They are not to be shared or committed to a repository. The installer stores
+them in a secrets file in the user config directory. The MCP client config
+stores only the path to that file. Sharing credentials, bypassing login, or
+calling the service without approval is unauthorized.
+
+This package does not include the Momentum Analyzer application, its database,
+or any password. The MCP server only calls the HTTP API after a successful
+login with credentials from that secrets file.

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-momentum-analyzer"
+version = "0.1.0"
+description = "Trading Wiser MCP servers and agents. Credentials stay in the client, not in this package."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Pranay Vyas" }]
+
+[project.scripts]
+tradingwiser-mcp = "mcp_servers.tradingwiser.server:main"
+ai-momentum-analyzer = "ai_momentum_analyzer.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["mcp_servers*", "agents*", "ai_momentum_analyzer*"]
+
+[tool.setuptools.package-data]
+agents = ["*.mdc"]
