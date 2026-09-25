@@ -86,10 +86,23 @@ Perplexity works when it can start that local process. A connector that only acc
 
 The daily holdings agent can start from a pasted screenshot. A read-only E*TRADE MCP is optional and is not included. See `mcp_servers/etrade/README.md`. Order placement stays off. Those keys also stay in the client config only.
 
+## Release
+
+On the Actions tab, run **Release** and choose `minor` or `major`. The workflow is on `main`. From `0.1.0`, minor becomes `0.2.0` and major becomes `1.0.0`.
+
+The run creates branch `release/vX.Y.Z`, commits that version in `pyproject.toml`, builds one wheel, and attaches it to the GitHub Release `vX.Y.Z`. It also opens a pull request into `main`.
+
+```bash
+pip install https://github.com/pranayVyas/ai_momentum_analyzer/releases/download/vX.Y.Z/ai_momentum_analyzer-X.Y.Z-py3-none-any.whl
+```
+
+That download still requires access to this repository. It does not grant access to Trading Wiser.
+
 ## Develop
 
 ```bash
 python -m unittest mcp_servers.tradingwiser.test_client mcp_servers.tradingwiser.test_protocol
+python scripts/test_bump_version.py
 ```
 
 The protocol test speaks to a local stand-in. It uses the username `tester` and the password `tester-pass` against that stand-in only. Those are not Trading Wiser credentials.

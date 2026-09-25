@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Release type
+        required: true
+        type: choice
+        options:
+          - minor
+          - major
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Choose the next version
+        id: version
+        run: echo "version=$(python scripts/bump_version.py ${{ inputs.bump }} pyproject.toml)" >> "$GITHUB_OUTPUT"
+
+      - name: Stop if this version was already released
+        run: |
+          tag="v${{ steps.version.outputs.version }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "${tag} already exists"
+            exit 1
+          fi
+
+      - name: Commit the version on a release branch
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          branch="release/v${version}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${branch}"
+          git add pyproject.toml
+          git commit -m "chore: release v${version}"
+          git push origin "${branch}"
+
+      - name: Build the wheel
+        run: |
+          python -m pip install build
+          python -m build
+          ls dist/*.whl
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          wheel="$(echo dist/*.whl)"
+          gh release create "v${VERSION}" "${wheel}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "release/v${VERSION}" \
+            --title "v${VERSION}" \
+            --notes "Wheel for ai-momentum-analyzer ${VERSION}."
+
+      - name: Open a pull request into main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh pr create \
+            --repo "${GITHUB_REPOSITORY}" \
+            --base main \
+            --head "release/v${VERSION}" \
+            --title "Release v${VERSION}" \
+            --body "Bumps the package version to ${VERSION}. The wheel is attached to the v${VERSION} GitHub release."
