@@ -23,6 +23,6 @@ The password is not in the client config and not in this repo. See `examples/`.
 
 ## Tools
 
-`get_scan`, `get_signal_brief`, `get_prices`, `get_flow`, `get_unusual_options`, `get_unusual_volumes`, `get_unusual_rankings`, `get_sentiment`.
+`get_scan`, `get_signal_brief`, `get_signal_briefs`, `get_prices`, `get_indicators`, `get_fundamentals`, `get_zones`, `get_trend_history`, `get_flow`, `get_unusual_options`, `get_unusual_volumes`, `get_unusual_rankings`, `get_sentiment`, `get_key_dates`, `get_market_sentiment`.
 
-There is no separate headlines route. Sector headlines are inside `get_sentiment` when the API snapshot includes them. Open-versus-close inference is the `inferred_action` field on `get_unusual_options`.
+`get_key_dates` needs no symbol. Upcoming events run from today through the next 21 days, and realized events are the recent prints. `get_market_sentiment` is the Fed and macro snapshot. Per-symbol sector headlines stay inside `get_sentiment`. Open-versus-close inference is the `inferred_action` field on `get_unusual_options`. `get_signal_brief` is the latest brief. `get_signal_briefs` is the history.
