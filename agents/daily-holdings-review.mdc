@@ -86,11 +86,20 @@ contradicted, never the final word. Always pull:
 | `get_signal_brief` | Trading Wiser's own latest narrative call for the name |
 | `get_flow` | Options flow summary (direction, unusual buying/selling) |
 | `get_unusual_options` | Session unusual contracts, greeks, and `inferred_action` (open vs close) — read this for smart-money intent and to gauge IV before recommending an option structure |
-| `get_sentiment` | Sector sentiment snapshot; **stored headlines live here** (there is no separate headlines tool) |
+| `get_sentiment` | Sector sentiment snapshot for the name; **stored headlines live here** |
 | `get_prices` | Recent daily prices to confirm the actual move/direction |
+| `get_fundamentals` | Fundamentals snapshot when the holding is a longer-term decision |
+
+Once per review, not once per symbol:
+
+| Tool | What you use it for |
+| --- | --- |
+| `get_key_dates` | Events from today through the next 21 days, plus recently realized prints. Use this for catalysts that sit in front of the book. |
+| `get_market_sentiment` | Fed and macro tone. Cross-check it with each name's `get_sentiment`. |
 
 Optional, when relevant: `get_unusual_volumes` (elevated strikes for a name),
-`get_unusual_rankings` (where the name ranks in the watchlist on unusual activity).
+`get_unusual_rankings` (where the name ranks in the watchlist on unusual activity),
+`get_indicators`, `get_zones`, `get_trend_history`, `get_signal_briefs`.
 
 If a tool errors with an auth message, call `mcp_auth` for the `tradingwiser`
 namespace once, then retry. If data is stale (check timestamps / `last_updated`),
@@ -105,7 +114,8 @@ symbol, search for:
 1. **Fresh catalysts / news** — earnings dates, guidance, analyst rating/PT
    changes, M&A, litigation, product events. Use the current year in queries.
 2. **Market & sector sentiment** — is the broad tape and the name's sector risk-on
-   or risk-off right now? Cross-check with `get_sentiment`.
+   or risk-off right now? Cross-check `get_sentiment` with `get_market_sentiment`
+   and with `get_key_dates` for a print inside the next 21 days.
 3. **Confirm the move** — does the real-world price direction/level line up with
    Trading Wiser's `price` / bias / regime? Flag any divergence.
 
@@ -131,7 +141,7 @@ For every position produce two linked decisions:
      from `get_unusual_options` greeks looks rich; note the nearest catalyst/expiry
      risk.
    - **Long-term (months / LEAPS):** structural regime + fundamentals-driven. Lean
-     on regime, phase, historical regime durations, and the fundamentals pillar.
+     on regime, phase, `get_fundamentals`, and the fundamentals pillar.
    - If neither prior nor validation supports a trade, say **"no options trade
      today"** and why. Skipping is a valid, common outcome.
 

@@ -68,6 +68,51 @@ TOOLS = [
         "path": "/api/v3/ticker/{symbol}/sentiment",
         "symbol": True,
     },
+    {
+        "name": "get_indicators",
+        "description": "Technical indicators for one symbol, including RSI and moving averages when the API returns them.",
+        "path": "/api/v3/ticker/{symbol}/indicators",
+        "symbol": True,
+        "query": ["days"],
+    },
+    {
+        "name": "get_fundamentals",
+        "description": "Fundamentals snapshot for one symbol.",
+        "path": "/api/v3/ticker/{symbol}/fundamentals",
+        "symbol": True,
+    },
+    {
+        "name": "get_zones",
+        "description": "Support, resistance, and balance zones for one symbol.",
+        "path": "/api/v3/ticker/{symbol}/zones",
+        "symbol": True,
+    },
+    {
+        "name": "get_trend_history",
+        "description": "Recent trend snapshots for one symbol: phase and conviction by day.",
+        "path": "/api/v3/ticker/{symbol}/trend-history",
+        "symbol": True,
+        "query": ["days"],
+    },
+    {
+        "name": "get_signal_briefs",
+        "description": "Signal brief history for one symbol. Use get_signal_brief for the latest brief only.",
+        "path": "/api/v3/ticker/{symbol}/signal-briefs",
+        "symbol": True,
+        "query": ["limit"],
+    },
+    {
+        "name": "get_key_dates",
+        "description": "Upcoming key economic dates from today through the next 21 days, plus recently realized events.",
+        "path": "/api/v3/dashboard/key-dates",
+        "symbol": False,
+    },
+    {
+        "name": "get_market_sentiment",
+        "description": "Latest Fed and macro sentiment snapshot. Separate from per-symbol get_sentiment.",
+        "path": "/api/v3/dashboard/sentiment",
+        "symbol": False,
+    },
 ]
 
 
