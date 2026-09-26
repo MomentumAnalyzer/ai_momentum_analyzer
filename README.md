@@ -8,11 +8,11 @@ Trading Wiser and Momentum Analyzer are private. Only someone who has been expli
 
 | Path | What it is |
 | --- | --- |
-| `mcp_servers/tradingwiser` | Stdio MCP server. Tools: `get_scan`, `get_signal_brief`, `get_prices`, `get_flow`, `get_unusual_options`, `get_unusual_volumes`, `get_unusual_rankings`, `get_sentiment`. |
+| `mcp_servers/tradingwiser` | Stdio MCP server. Tools include scan, briefs, prices, indicators, fundamentals, zones, trend history, flow, unusual options, sentiment, the 21-day key-dates calendar, and the Fed sentiment snapshot. |
 | `mcp_servers/etrade` | How to connect a separate read-only E*TRADE MCP. This repo does not ship that server or any E*TRADE keys. |
 | `agents/` | Agent instructions: daily holdings review, and the Trading Wiser signal critic. |
 
-The signal critic's arithmetic step still runs inside a Momentum Analyzer checkout (`python -m momentum_analyzer.v2.cli.main critic`). That engine is not in this package. Without that checkout, the agent still uses the MCP tools and public market checks, and it says the recompute step was skipped.
+The signal critic compares Momentum Analyzer's price, momentum, sentiment, and a few published indicators with public sources such as Yahoo Finance. It does not recompute the grade.
 
 ## Install the package
 

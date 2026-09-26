@@ -46,8 +46,12 @@ class _Handler(BaseHTTPRequestHandler):
         if self.headers.get("Authorization") != "Bearer token-1":
             self._send(401, {"detail": "missing token"})
             return
-        if self.path.split("?")[0] == "/api/v3/ticker/AAPL/scan":
+        path = self.path.split("?")[0]
+        if path == "/api/v3/ticker/AAPL/scan":
             self._send(200, {"symbol": "AAPL", "setup_grade": "A", "conviction_score": 80})
+            return
+        if path == "/api/v3/dashboard/key-dates":
+            self._send(200, {"upcoming": [{"event_name": "CPI"}], "realized": []})
             return
         self._send(404, {"detail": "not found"})
 
@@ -111,6 +115,56 @@ class ProtocolTest(unittest.TestCase):
         self.assertEqual(body["setup_grade"], "A")
         self.assertEqual(_Handler.calls[0][:2], ("POST", "/api/v3/auth/login"))
         self.assertEqual(_Handler.calls[1][0], "GET")
+        self.assertEqual(_Handler.calls[1][2], "Bearer token-1")
+
+    def test_key_dates_logs_in_then_reads_without_a_symbol(self):
+        _Handler.calls = []
+        server = ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
+        port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        env = os.environ.copy()
+        env.update(
+            {
+                "TRADINGWISER_API_BASE": f"http://127.0.0.1:{port}",
+                "TRADINGWISER_USERNAME": "tester",
+                "TRADINGWISER_PASSWORD": "tester-pass",
+                "PYTHONPATH": str(Path(__file__).resolve().parents[2]),
+            }
+        )
+        proc = subprocess.Popen(
+            [sys.executable, "-m", "mcp_servers.tradingwiser"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
+        try:
+            proc.stdin.write(_frame({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}))
+            proc.stdin.write(_frame({"jsonrpc": "2.0", "method": "notifications/initialized"}))
+            proc.stdin.write(
+                _frame(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 2,
+                        "method": "tools/call",
+                        "params": {"name": "get_key_dates", "arguments": {}},
+                    }
+                )
+            )
+            proc.stdin.close()
+            _read(proc)
+            result = _read(proc)
+            proc.wait(timeout=5)
+        finally:
+            proc.kill()
+            server.shutdown()
+
+        self.assertFalse(result["result"]["isError"])
+        body = json.loads(result["result"]["content"][0]["text"])
+        self.assertEqual(body["upcoming"][0]["event_name"], "CPI")
+        self.assertEqual(_Handler.calls[0][:2], ("POST", "/api/v3/auth/login"))
+        self.assertEqual(_Handler.calls[1][1], "/api/v3/dashboard/key-dates")
         self.assertEqual(_Handler.calls[1][2], "Bearer token-1")
 
 
