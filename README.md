@@ -10,7 +10,7 @@ Trading Wiser and Momentum Analyzer are private. Only someone who has been expli
 | --- | --- |
 | `mcp_servers/tradingwiser` | Stdio MCP server. Tools include scan, briefs, prices, indicators, fundamentals, zones, trend history, flow, unusual options, sentiment, the 21-day key-dates calendar, and the Fed sentiment snapshot. |
 | `mcp_servers/etrade` | How to connect a separate read-only E*TRADE MCP. This repo does not ship that server or any E*TRADE keys. |
-| `agents/` | Agent instructions: daily holdings review, and the Trading Wiser signal critic. |
+| `agents/` | Agent instructions: daily holdings review, the Trading Wiser signal critic, and the zone analysis report. |
 
 The signal critic compares Momentum Analyzer's price, momentum, sentiment, and a few published indicators with public sources such as Yahoo Finance. It does not recompute the grade.
 
