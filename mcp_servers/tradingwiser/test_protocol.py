@@ -8,6 +8,7 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -42,7 +43,9 @@ class _Handler(BaseHTTPRequestHandler):
         self._send(401, {"detail": "Invalid credentials"})
 
     def do_GET(self):
-        self.calls.append(("GET", self.path.split("?")[0], self.headers.get("Authorization")))
+        self.calls.append(
+            ("GET", self.path.split("?")[0], self.headers.get("Authorization"), self.path)
+        )
         if self.headers.get("Authorization") != "Bearer token-1":
             self._send(401, {"detail": "missing token"})
             return
@@ -52,6 +55,9 @@ class _Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/v3/dashboard/key-dates":
             self._send(200, {"upcoming": [{"event_name": "CPI"}], "realized": []})
+            return
+        if path == "/api/v3/ticker/NVDA/indicators":
+            self._send(200, {"timeframe": "1D", "rsi": [55.4]})
             return
         self._send(404, {"detail": "not found"})
 
@@ -166,6 +172,62 @@ class ProtocolTest(unittest.TestCase):
         self.assertEqual(_Handler.calls[0][:2], ("POST", "/api/v3/auth/login"))
         self.assertEqual(_Handler.calls[1][1], "/api/v3/dashboard/key-dates")
         self.assertEqual(_Handler.calls[1][2], "Bearer token-1")
+
+    def test_indicators_requests_daily_when_timeframe_is_omitted(self):
+        self._assert_indicator_timeframe({}, "1D")
+
+    def test_indicators_forwards_weekly_when_requested(self):
+        self._assert_indicator_timeframe({"timeframe": "1W"}, "1W")
+
+    def _assert_indicator_timeframe(self, arguments, expected):
+        _Handler.calls = []
+        server = ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
+        port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        env = os.environ.copy()
+        env.update(
+            {
+                "TRADINGWISER_API_BASE": f"http://127.0.0.1:{port}",
+                "TRADINGWISER_USERNAME": "tester",
+                "TRADINGWISER_PASSWORD": "tester-pass",
+                "PYTHONPATH": str(Path(__file__).resolve().parents[2]),
+            }
+        )
+        proc = subprocess.Popen(
+            [sys.executable, "-m", "mcp_servers.tradingwiser"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
+        try:
+            proc.stdin.write(_frame({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}))
+            proc.stdin.write(_frame({"jsonrpc": "2.0", "method": "notifications/initialized"}))
+            proc.stdin.write(
+                _frame(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 2,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "get_indicators",
+                            "arguments": {"symbol": "NVDA", **arguments},
+                        },
+                    }
+                )
+            )
+            proc.stdin.close()
+            _read(proc)
+            result = _read(proc)
+            proc.wait(timeout=5)
+        finally:
+            proc.kill()
+            server.shutdown()
+
+        self.assertFalse(result["result"]["isError"])
+        query = parse_qs(urlparse(_Handler.calls[1][3]).query)
+        self.assertEqual(query.get("timeframe"), [expected])
 
 
 if __name__ == "__main__":

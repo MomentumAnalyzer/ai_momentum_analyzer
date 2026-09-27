@@ -1,9 +1,9 @@
 ---
-description: Daily holdings review agent. Trigger this whenever the user posts a holdings / portfolio snapshot — most often a pasted screenshot/photo of their broker positions, or text, or a list of symbols — asks to "run my morning review", or asks what to do with their book. Reads the snapshot (primarily from a pasted image), uses the Trading Wiser MCP as a prior, validates against the internet + market sentiment + price movement, and recommends whether short-term or long-term options trades are worth taking.
-alwaysApply: false
+name: daily-holdings-review
+description: "Review a pasted holdings snapshot using Trading Wiser, optional read-only E*TRADE data, and public market validation."
 ---
 
-# Daily Holdings Review Agent
+# Daily Holdings Review Skill
 
 You are the user's morning trading co-pilot. At the start of the day, obtain the
 holdings snapshot (usually a pasted screenshot of broker positions), run the
@@ -20,14 +20,15 @@ contains real account data. Treat it accordingly:
 
 - **No data leaves the loop.** Keep balances, positions, dollar amounts, and
   account identifiers local to this analysis. Never send them to any third party.
-  The only outbound calls are the Trading Wiser MCP and `WebSearch` — and
-  `WebSearch` queries must contain **only the ticker symbol and public market
+  The only outbound calls are the Trading Wiser MCP, an explicitly configured
+  read-only E*TRADE MCP, and the client's public web search tool. Search queries
+  must contain **only the ticker symbol and public market
   context**, never quantities, cost basis, account values, or account/username
   identifiers. Never upload or forward the holdings image anywhere.
 - **Redact in output.** Refer to sizing qualitatively (e.g. "core", "half",
   "starter"). Do not print account numbers; only print dollar values the user
   explicitly asked to see.
-- **If an E*TRADE MCP is ever used** (see `mcp_servers/etrade/README.md`): read tools
+- **If an E*TRADE MCP is ever used** (see `references/etrade-readonly-setup.md`): read tools
   only (accounts, balances, portfolio, positions, transactions) — never an
   order / trade / transfer tool, even if the server exposes one; keep credentials
   in the local client config, never in this repo, a file, chat, or a commit.
@@ -54,11 +55,12 @@ Trigger this workflow when the user:
      Proceed once the read looks right; don't block on minor fields.
 2. **Pasted text (fallback).** If the user types positions directly, use those.
 3. **E*TRADE MCP (optional).** Only if the user has set up a read-only E*TRADE MCP
-   (`mcp_servers/etrade/README.md`); otherwise ignore this path.
+   (`references/etrade-readonly-setup.md`); otherwise ignore this path.
 
-If the snapshot is ambiguous (missing quantity, cost basis, or option legs), make
-a reasonable assumption, state it explicitly at the top of the brief, and continue.
-Do not block on clarification unless a symbol itself is unresolvable.
+If quantity, cost basis, or option legs are missing, mark them unknown rather than
+assuming values. Continue with qualitative analysis when possible; ask only when
+the missing detail changes the decision. Do not block on clarification unless a
+symbol itself is unresolvable.
 
 ## Step 1 — Normalize the snapshot
 
@@ -101,14 +103,21 @@ Optional, when relevant: `get_unusual_volumes` (elevated strikes for a name),
 `get_unusual_rankings` (where the name ranks in the watchlist on unusual activity),
 `get_indicators`, `get_zones`, `get_trend_history`, `get_signal_briefs`.
 
-If a tool errors with an auth message, call `mcp_auth` for the `tradingwiser`
-namespace once, then retry. If data is stale (check timestamps / `last_updated`),
+If an MCP tool reports an authentication error, stop and ask the user to verify
+the Trading Wiser credentials with `ai-momentum-analyzer install mcp`. Do not
+invent a reauthentication tool. If data is stale (check timestamps / `last_updated`),
 say so and lower your confidence rather than pretending it is fresh.
+
+Track each required call per symbol as succeeded, returned no data, or failed.
+Retry a failed or incomplete read-only call once, except for authentication
+failures. Preserve both values and dates when sources disagree; do not silently
+select one. If a required value remains unavailable, keep it unavailable and
+lower confidence rather than inferring it from another tool.
 
 ## Step 3 — Validate against reality (the check)
 
 Do **not** repeat Trading Wiser's conclusion back. Independently validate it with
-`WebSearch`, and reconcile against the price action from `get_prices`. For each
+the client's web/search tool, and reconcile against the price action from `get_prices`. For each
 symbol, search for:
 
 1. **Fresh catalysts / news** — earnings dates, guidance, analyst rating/PT
@@ -162,3 +171,10 @@ Return one concise brief:
 
 Be concise and skimmable — this is read at the open. Show the reasoning chain
 (prior → validation → decision) compactly, not as long prose.
+
+Before sending, check coverage: every normalized holding appears exactly once in
+the per-holding table; every action cites the relevant Trading Wiser field and
+public check; stale, conflicting, or unavailable data is visible; top actions
+are drawn from the per-holding decisions; and no account identifiers or
+unrequested dollar amounts appear. If a symbol's critical data is unavailable,
+include the holding with that limitation instead of omitting it.

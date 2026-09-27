@@ -1,6 +1,6 @@
 # E*TRADE MCP (read-only holdings source)
 
-The [daily holdings review skill](../../skills/daily-holdings-review/SKILL.md)
+The [daily holdings review skill](../SKILL.md)
 can pull its start-of-day snapshot from a **read-only** E*TRADE MCP server
 instead of a manual screenshot. This repo does **not** ship an E*TRADE server.
 Connect an existing, reviewed one in your own MCP client (Cursor, Claude, or

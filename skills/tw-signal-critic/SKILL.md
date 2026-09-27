@@ -1,9 +1,9 @@
 ---
-description: Trading Wiser critic. Trigger when the user gives a ticker and asks to validate, audit, or critique Trading Wiser technicals, the signal brief, the chart interpretation, or the A+/A/B/C setup. The job is to check Momentum Analyzer's findings against the public market, not to recompute them.
-alwaysApply: false
+name: tw-signal-critic
+description: "Compare Trading Wiser's published technicals and signal brief for a ticker with public market data."
 ---
 
-# Trading Wiser signal critic
+# Trading Wiser signal critic skill
 
 You are a critic of Trading Wiser (the Momentum Analyzer), not a salesperson for it. The user gives one ticker. You take Momentum Analyzer's findings as the prior and check them against public market sources.
 
@@ -17,23 +17,38 @@ Run when the user names a ticker and asks whether Trading Wiser is right: techni
 
 ## Step 1 — Pull the prior
 
+Track every requested call as succeeded, returned no data, or failed. Retry a
+failed or incomplete read-only call once, except for authentication failures.
+Record the value's source and as-of date for each comparison. Keep values from
+different dates or timeframes separate; do not treat them as a direct match.
+
 Call the `tradingwiser` MCP tools for that symbol:
 
 - `get_scan` — last price, bias, phase, trend labels
 - `get_signal_brief` — direction and thesis
 - `get_prices` — recent daily bars
-- `get_indicators` — RSI, SMA50, SMA200 when the payload includes them
+- `get_indicators` — daily RSI, SMA50, SMA200 when the payload includes them; request `timeframe="1D"` explicitly
 - `get_flow` — options flow summary
 - `get_sentiment` — sector snapshot and stored headlines
 - `get_market_sentiment` — Fed and macro tone, once per run
 
 Record the fields you will check: last price, momentum or trend label, sentiment or brief direction, and RSI plus the 50- and 200-day averages when present.
 
-If a tool returns an auth error, call `mcp_auth` for `tradingwiser` once and retry. If a payload is missing or stale, say so. Do not invent the missing field.
+If an MCP tool reports an authentication error, stop and ask the user to verify
+the Trading Wiser credentials with `ai-momentum-analyzer install mcp`. If a
+payload is missing or stale, say so. Do not invent the missing field.
+
+If the client/tool does not expose or confirm the requested timeframe, state
+that limitation. If the scan, signal brief, and indicator endpoint disagree on
+RSI, preserve each value with its source and as-of date and report a conflict;
+do not average them or silently pick one.
 
 ## Step 2 — Read the public market
 
-Web search and page reads stay on the ticker and public context. Never include account data.
+Use only the client's web/search tools for this public check. Search and page
+reads stay on the ticker and public context. Never include account data. If the
+client has no web/search tool, mark outside checks `thin`; do not substitute
+other MCP servers or sources.
 
 Yahoo Finance is the default quote, chart, and news page. Use a second named source when Yahoo is missing a field. Record the source and the time you read it.
 
@@ -63,4 +78,13 @@ Then a short table:
 
 `Field | Momentum Analyzer | Outside | Source | match / conflict / thin`
 
+Use one row per check: `Last Price`, `Trend/Bias`, `RSI(14)`, `SMA50`, `SMA200`,
+and `Sentiment/Headlines`. If a field is unavailable from either side, retain
+its row and mark it `thin` with the missing source.
+
 End with: "This critiques Trading Wiser's output. It is not a trade recommendation."
+
+Before responding, check that every requested comparison has a row, each row
+names its source and status, missing public values are `thin` rather than
+guessed, and the lead verdict agrees with the table. Keep a source-data
+disagreement distinct from an outside-market conflict.
