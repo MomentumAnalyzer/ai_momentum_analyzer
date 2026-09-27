@@ -22,6 +22,7 @@
     "summary_cards": {"type": "array", "items": {"$ref": "#/$defs/card"}},
     "market_sentiment": {
       "type": "object",
+      "required": ["fed_label", "fed_score", "symbol_summary"],
       "properties": {
         "fed_label": {"type": ["string", "null"]},
         "fed_score": {"type": ["number", "string", "null"]},
@@ -37,7 +38,7 @@
     "recommendations": {"type": "array", "items": {"$ref": "#/$defs/recommendation"}},
     "public_market_check": {
       "type": "object",
-      "required": ["overall", "rows"],
+      "required": ["overall", "checked_at", "sources", "rows"],
       "properties": {
         "overall": {"enum": ["match", "conflict", "thin"]},
         "checked_at": {"type": ["string", "null"]},
@@ -50,7 +51,7 @@
   "$defs": {
     "card": {
       "type": "object",
-      "required": ["title", "value"],
+      "required": ["title", "value", "subtitle"],
       "properties": {
         "title": {"type": "string"},
         "value": {"type": ["string", "number", "null"]},
@@ -59,6 +60,11 @@
     },
     "zone": {
       "type": "object",
+      "required": [
+        "name", "timeframe", "low", "mid", "high", "strength", "touches",
+        "rejections", "breakouts", "rejection_rate", "distance_atr",
+        "distance_pct", "key_insight"
+      ],
       "properties": {
         "name": {"type": ["string", "null"]},
         "timeframe": {"type": ["string", "null"]},
@@ -77,7 +83,7 @@
     },
     "reading": {
       "type": "object",
-      "required": ["name", "value"],
+      "required": ["name", "value", "reading"],
       "properties": {
         "name": {"type": "string"},
         "value": {"type": ["string", "number", "null"]},
@@ -104,7 +110,7 @@
     },
     "check": {
       "type": "object",
-      "required": ["field", "momentum_analyzer", "public", "source", "result"],
+      "required": ["field", "momentum_analyzer", "public", "source", "result", "note"],
       "properties": {
         "field": {"type": "string"},
         "momentum_analyzer": {"type": ["string", "number", "null"]},

@@ -17,12 +17,17 @@ Run when the user names a ticker and asks whether Trading Wiser is right: techni
 
 ## Step 1 — Pull the prior
 
+Track every requested call as succeeded, returned no data, or failed. Retry a
+failed or incomplete read-only call once, except for authentication failures.
+Record the value's source and as-of date for each comparison. Keep values from
+different dates or timeframes separate; do not treat them as a direct match.
+
 Call the `tradingwiser` MCP tools for that symbol:
 
 - `get_scan` — last price, bias, phase, trend labels
 - `get_signal_brief` — direction and thesis
 - `get_prices` — recent daily bars
-- `get_indicators` — RSI, SMA50, SMA200 when the payload includes them
+- `get_indicators` — daily RSI, SMA50, SMA200 when the payload includes them; request `timeframe="1D"` explicitly
 - `get_flow` — options flow summary
 - `get_sentiment` — sector snapshot and stored headlines
 - `get_market_sentiment` — Fed and macro tone, once per run
@@ -32,6 +37,11 @@ Record the fields you will check: last price, momentum or trend label, sentiment
 If an MCP tool reports an authentication error, stop and ask the user to verify
 the Trading Wiser credentials with `ai-momentum-analyzer install mcp`. If a
 payload is missing or stale, say so. Do not invent the missing field.
+
+If the client/tool does not expose or confirm the requested timeframe, state
+that limitation. If the scan, signal brief, and indicator endpoint disagree on
+RSI, preserve each value with its source and as-of date and report a conflict;
+do not average them or silently pick one.
 
 ## Step 2 — Read the public market
 
@@ -68,4 +78,13 @@ Then a short table:
 
 `Field | Momentum Analyzer | Outside | Source | match / conflict / thin`
 
+Use one row per check: `Last Price`, `Trend/Bias`, `RSI(14)`, `SMA50`, `SMA200`,
+and `Sentiment/Headlines`. If a field is unavailable from either side, retain
+its row and mark it `thin` with the missing source.
+
 End with: "This critiques Trading Wiser's output. It is not a trade recommendation."
+
+Before responding, check that every requested comparison has a row, each row
+names its source and status, missing public values are `thin` rather than
+guessed, and the lead verdict agrees with the table. Keep a source-data
+disagreement distinct from an outside-market conflict.
