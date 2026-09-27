@@ -1,0 +1,6 @@
+{
+  "name": "trading-wiser",
+  "description": "Trading Wiser skills for Claude Code. Configure the Trading Wiser MCP server separately with ai-momentum-analyzer.",
+  "version": "0.4.0",
+  "author": {"name": "Trading Wiser"}
+}
