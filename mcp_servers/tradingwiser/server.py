@@ -191,7 +191,7 @@ def _handle(message: dict, client: TradingWiserClient | None) -> TradingWiserCli
                 "result": {
                     "protocolVersion": PROTOCOL,
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": SERVER_NAME, "version": "0.1.0"},
+                    "serverInfo": {"name": SERVER_NAME, "version": "0.5.0"},
                 },
             }
         )
