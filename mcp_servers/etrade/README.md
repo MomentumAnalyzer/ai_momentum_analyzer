@@ -1,6 +1,6 @@
 # E*TRADE MCP (read-only holdings source)
 
-The [daily holdings review agent](../../agents/daily-holdings-review.mdc)
+The [daily holdings review skill](../../skills/daily-holdings-review/SKILL.md)
 can pull its start-of-day snapshot from a **read-only** E*TRADE MCP server
 instead of a manual screenshot. This repo does **not** ship an E*TRADE server.
 Connect an existing, reviewed one in your own MCP client (Cursor, Claude, or
@@ -8,7 +8,7 @@ Codex). The server runs locally and talks only to E*TRADE's official OAuth API.
 
 ## Which server
 
-The agent only needs cash, balances, and positions — reads, never orders.
+The skill only needs cash, balances, and positions — reads, never orders.
 
 | Server | Holdings? | Write surface | Verdict |
 | --- | --- | --- | --- |
@@ -49,6 +49,6 @@ environment. Validate against sandbox first, then switch to production.
 - [ ] Source and dependencies do not phone home or send telemetry. Account data stays between your machine and E*TRADE.
 - [ ] Only read tools are enabled. If the server can place orders, order placement is disabled.
 - [ ] Credentials live in the client MCP config only — never in this repo, a committed file, logs, or chat.
-- [ ] The agent's safety rules hold: no positions, balances, dollar amounts, or account identifiers go into web search or any third party.
+- [ ] The skill's safety rules hold: no positions, balances, dollar amounts, or account identifiers go into web search or any third party.
 
 If any box can't be checked, fall back to a manual paste of the snapshot.

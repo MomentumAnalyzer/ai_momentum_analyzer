@@ -221,6 +221,8 @@ __marimo__/
 !.gitignore
 !.github/
 !.github/**
+!.claude-plugin/
+!.claude-plugin/**
 **/.mcp.json
 .cursor/mcp.json
 .claude.json

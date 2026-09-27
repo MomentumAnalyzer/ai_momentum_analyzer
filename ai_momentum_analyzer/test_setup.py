@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ai_momentum_analyzer.cli import install_agents, merge_codex_toml, merge_mcp_json, server_block, write_secrets
+from ai_momentum_analyzer.cli import install_skills, merge_codex_toml, merge_mcp_json, server_block, write_secrets
 
 
 class SetupTest(unittest.TestCase):
@@ -44,12 +44,14 @@ class SetupTest(unittest.TestCase):
             self.assertIn('[mcp_servers.other]', text)
             self.assertIn(str(secrets), text)
 
-    def test_install_agents_copies_rules(self):
+    def test_install_skills_uses_portable_cursor_directory(self):
         with tempfile.TemporaryDirectory() as directory:
-            written = install_agents("cursor", Path(directory))
-        names = {path.name for path in written}
-        self.assertIn("daily-holdings-review.mdc", names)
-        self.assertIn("tw-signal-critic.mdc", names)
+            root = Path(directory)
+            written = install_skills("cursor", root)
+        names = {path.parent.name for path in written}
+        self.assertEqual(names, {"daily-holdings-review", "tw-signal-critic", "zone-analysis-report"})
+        self.assertTrue(all(path.name == "SKILL.md" for path in written))
+        self.assertTrue(all(path.parent.parent == root / ".agents" / "skills" for path in written))
 
 
 if __name__ == "__main__":

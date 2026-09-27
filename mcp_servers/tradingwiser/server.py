@@ -70,10 +70,11 @@ TOOLS = [
     },
     {
         "name": "get_indicators",
-        "description": "Technical indicators for one symbol, including RSI and moving averages when the API returns them.",
+        "description": "Technical indicators for one symbol. Defaults to daily (1D) RSI, Williams %R, MACD, and ATR. Pass timeframe 1W only when weekly bars are required.",
         "path": "/api/v3/ticker/{symbol}/indicators",
         "symbol": True,
-        "query": ["days"],
+        "query": ["days", "timeframe"],
+        "defaults": {"timeframe": "1D"},
     },
     {
         "name": "get_fundamentals",
@@ -123,7 +124,10 @@ def _tool_schema(spec: dict) -> dict:
         props["symbol"] = {"type": "string", "description": "Ticker symbol"}
         required.append("symbol")
     for name in spec.get("query", []):
-        props[name] = {"type": "string"}
+        prop: dict[str, Any] = {"type": "string"}
+        if name == "timeframe":
+            prop["description"] = "1D for daily bars (the default) or 1W for weekly bars"
+        props[name] = prop
     return {
         "name": spec["name"],
         "description": spec["description"],
@@ -166,6 +170,9 @@ def _call_tool(client: TradingWiserClient, name: str, arguments: dict) -> dict:
         raise AuthError("symbol is required")
     path = spec["path"].format(symbol=symbol)
     query = {key: arguments.get(key) for key in spec.get("query", [])}
+    for key, value in spec.get("defaults", {}).items():
+        if not query.get(key):
+            query[key] = value
     return client.get_json(path, query)
 
 
