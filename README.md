@@ -59,7 +59,9 @@ The zone-analysis skill prescribes a phased workflow, an explicit source policy,
 Report assets are in `skills/zone-analysis-report/assets/`. To render a report data file manually:
 
 ```bash
-python3 skills/zone-analysis-report/scripts/render_report.py report.json --output NVDA_detailed_zone_analysis.html
+tradingwiser-render-report --show-schema
+tradingwiser-render-report report.json --validate-only
+tradingwiser-render-report report.json --output NVDA_detailed_zone_analysis.html
 ```
 
 The skill guides the model to use only the named Trading Wiser MCP tools and the specified public check. A skill cannot technically disable other tools in a client; strict source isolation also requires restricting that client's enabled tools.

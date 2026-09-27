@@ -57,9 +57,10 @@ Trigger this workflow when the user:
 3. **E*TRADE MCP (optional).** Only if the user has set up a read-only E*TRADE MCP
    (`references/etrade-readonly-setup.md`); otherwise ignore this path.
 
-If the snapshot is ambiguous (missing quantity, cost basis, or option legs), make
-a reasonable assumption, state it explicitly at the top of the brief, and continue.
-Do not block on clarification unless a symbol itself is unresolvable.
+If quantity, cost basis, or option legs are missing, mark them unknown rather than
+assuming values. Continue with qualitative analysis when possible; ask only when
+the missing detail changes the decision. Do not block on clarification unless a
+symbol itself is unresolvable.
 
 ## Step 1 — Normalize the snapshot
 
@@ -106,6 +107,12 @@ If an MCP tool reports an authentication error, stop and ask the user to verify
 the Trading Wiser credentials with `ai-momentum-analyzer install mcp`. Do not
 invent a reauthentication tool. If data is stale (check timestamps / `last_updated`),
 say so and lower your confidence rather than pretending it is fresh.
+
+Track each required call per symbol as succeeded, returned no data, or failed.
+Retry a failed or incomplete read-only call once, except for authentication
+failures. Preserve both values and dates when sources disagree; do not silently
+select one. If a required value remains unavailable, keep it unavailable and
+lower confidence rather than inferring it from another tool.
 
 ## Step 3 — Validate against reality (the check)
 
@@ -164,3 +171,10 @@ Return one concise brief:
 
 Be concise and skimmable — this is read at the open. Show the reasoning chain
 (prior → validation → decision) compactly, not as long prose.
+
+Before sending, check coverage: every normalized holding appears exactly once in
+the per-holding table; every action cites the relevant Trading Wiser field and
+public check; stale, conflicting, or unavailable data is visible; top actions
+are drawn from the per-holding decisions; and no account identifiers or
+unrequested dollar amounts appear. If a symbol's critical data is unavailable,
+include the holding with that limitation instead of omitting it.

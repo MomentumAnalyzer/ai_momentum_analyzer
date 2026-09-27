@@ -10,11 +10,12 @@ import argparse
 import getpass
 import json
 import os
+import runpy
 import shutil
 import sys
 import zipfile
 from importlib.metadata import PackageNotFoundError, version
-from importlib.resources import files
+from importlib.resources import as_file, files
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -48,6 +49,16 @@ def server_command() -> tuple[str, list[str]]:
     if found:
         return found, []
     return sys.executable, ["-m", "mcp_servers.tradingwiser"]
+
+
+def render_report_main() -> int:
+    """Run the report renderer bundled with the installed package."""
+    renderer = files("skills").joinpath(
+        "zone-analysis-report", "scripts", "render_report.py"
+    )
+    with as_file(renderer) as renderer_path:
+        module = runpy.run_path(str(renderer_path), run_name="tradingwiser_report_renderer")
+        return module["main"](sys.argv[1:])
 
 
 def server_block(secrets_file: Path) -> dict:
