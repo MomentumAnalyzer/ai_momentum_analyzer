@@ -1,0 +1,8 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "trading-wiser",
+  "version": "0.4.0",
+  "description": "Trading Wiser workflows for holdings reviews, signal critiques, and detailed zone reports.",
+  "author": {"name": "Trading Wiser"},
+  "skills": "./skills/"
+}

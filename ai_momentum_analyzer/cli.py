@@ -1,4 +1,4 @@
-"""Interactive setup for the Trading Wiser MCP server and agents.
+"""Interactive setup for the Trading Wiser MCP server and portable skills.
 
 The password is written only to a secrets file outside the project. MCP client
 configs store the path to that file, not the password.
@@ -12,17 +12,19 @@ import json
 import os
 import shutil
 import sys
+import zipfile
+from importlib.metadata import PackageNotFoundError, version
 from importlib.resources import files
 from pathlib import Path
 from urllib.parse import urlparse
 
 CLIENTS = ("cursor", "claude-desktop", "claude-code", "codex")
-AGENT_DIRS = {
-    "cursor": Path(".cursor") / "rules",
-    "claude-code": Path(".claude") / "agents",
-    "claude-desktop": Path(".claude") / "agents",
-    "codex": Path(".codex") / "agents",
+SKILL_DIRS = {
+    "cursor": Path(".agents") / "skills",
+    "claude-code": Path(".claude") / "skills",
+    "codex": Path(".agents") / "skills",
 }
+SKILL_NAMES = ("daily-holdings-review", "tw-signal-critic", "zone-analysis-report")
 SECRETS_NAME = "secrets.json"
 
 
@@ -131,35 +133,71 @@ def register_mcp(client: str, scope: str, target: Path, secrets_file: Path) -> P
     return path
 
 
-def install_agents(client: str, target: Path) -> list[Path]:
-    if client not in AGENT_DIRS:
-        raise SystemExit(f"Unknown client {client}. Choose: {', '.join(AGENT_DIRS)}")
-    dest_dir = target / AGENT_DIRS[client]
+def install_skills(client: str, target: Path, scope: str = "project") -> list[Path]:
+    """Install portable skills at the directory each supported client discovers."""
+    target = target.resolve()
+    if client == "claude-desktop":
+        zip_dir = target / "tradingwiser-claude-skills"
+        zip_dir.mkdir(parents=True, exist_ok=True)
+        written: list[Path] = []
+        for skill_name in SKILL_NAMES:
+            resource = files("skills").joinpath(skill_name)
+            archive = zip_dir / f"{skill_name}.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
+                _zip_resource(bundle, resource, Path(skill_name))
+            written.append(archive)
+        plugin_archive = zip_dir / "trading-wiser-claude-plugin.zip"
+        try:
+            plugin_version = version("ai-momentum-analyzer")
+        except PackageNotFoundError:
+            plugin_version = "0.0.0"
+        manifest = {
+            "name": "trading-wiser",
+            "description": "Trading Wiser workflow skills. Configure MCP separately with ai-momentum-analyzer.",
+            "version": plugin_version,
+            "author": {"name": "Trading Wiser"},
+        }
+        with zipfile.ZipFile(plugin_archive, "w", zipfile.ZIP_DEFLATED) as bundle:
+            bundle.writestr(".claude-plugin/plugin.json", json.dumps(manifest, indent=2) + "\n")
+            for skill_name in SKILL_NAMES:
+                _zip_resource(bundle, files("skills").joinpath(skill_name), Path("skills") / skill_name)
+        written.append(plugin_archive)
+        return written
+    if client not in SKILL_DIRS:
+        raise SystemExit(f"Unknown client {client}. Choose: {', '.join(CLIENTS)}")
+    base = Path.home() if scope == "user" else target
+    dest_dir = base / SKILL_DIRS[client]
     dest_dir.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
-    bodies: list[str] = []
-    for resource in sorted(files("agents").iterdir(), key=lambda item: item.name):
-        if not resource.name.endswith(".mdc"):
-            continue
-        text = resource.read_text(encoding="utf-8")
-        dest = dest_dir / resource.name
-        dest.write_text(text, encoding="utf-8")
-        written.append(dest)
-        bodies.append(_agent_body(text))
-    if client == "codex" and bodies:
-        agents_md = target / "AGENTS.md"
-        if not agents_md.exists():
-            agents_md.write_text("\n\n".join(bodies).rstrip() + "\n", encoding="utf-8")
-            written.append(agents_md)
+    for skill_name in SKILL_NAMES:
+        resource = files("skills").joinpath(skill_name)
+        destination = dest_dir / skill_name
+        _copy_resource(resource, destination)
+        written.append(destination / "SKILL.md")
     return written
 
 
-def _agent_body(text: str) -> str:
-    if text.startswith("---"):
-        end = text.find("\n---", 3)
-        if end != -1:
-            return text[end + 4 :].lstrip("\n")
-    return text
+def _copy_resource(resource, destination: Path) -> None:
+    destination.mkdir(parents=True, exist_ok=True)
+    for child in resource.iterdir():
+        target = destination / child.name
+        if child.is_dir():
+            _copy_resource(child, target)
+        else:
+            target.write_bytes(child.read_bytes())
+
+
+def _zip_resource(bundle: zipfile.ZipFile, resource, prefix: Path) -> None:
+    for child in resource.iterdir():
+        target = prefix / child.name
+        if child.is_dir():
+            _zip_resource(bundle, child, target)
+        else:
+            bundle.writestr(target.as_posix(), child.read_bytes())
+
+
+# Kept as a source-compatible alias for existing internal callers.
+install_agents = install_skills
 
 
 def _ask(prompt: str, default: str | None = None) -> str:
@@ -260,22 +298,25 @@ def _run_install(
         print(f"Registered the tradingwiser MCP server in {config}")
         print("That config points at the secrets file. It does not contain the password.")
         print("Reload MCP servers in the client.")
-    if what in ("agents", "both"):
-        written = install_agents(client, target)
+    if what in ("skills", "agents", "both"):
+        written = install_skills(client, target, scope)
         if not written:
-            print("No agent files found in the package.", file=sys.stderr)
+            print("No skill files found in the package.", file=sys.stderr)
             return 1
-        print("Installed agents:")
+        print("Installed skills:")
         for path in written:
             print(f"  {path}")
         if client == "claude-desktop":
-            print("Claude Desktop does not load those files on its own.")
-            print("Paste the one you need into the Claude Project custom instructions.")
-        if client == "codex" and not (target / "AGENTS.md") in written:
-            print("Codex reads AGENTS.md. An AGENTS.md is already in this project, so it was left as-is.")
-            print(f"The agent text is in {target / AGENT_DIRS['codex']}")
+            print("Upload the plugin ZIP in Claude → Customize → Plugins → Add → Upload a custom plugin.")
+            print("Or upload individual skill ZIPs in Claude → Customize → Skills → + Create skill → Upload a skill.")
+        elif scope == "user":
+            print("Installed for this user account.")
+        else:
+            print("Installed for this project. Restart or reload the client if a skill does not appear.")
     if written_secrets is None and what == "agents":
-        print("Agents are installed. Run this again and choose MCP when you want to connect Trading Wiser.")
+        print("The legacy 'agents' choice is supported as an alias for 'skills'.")
+    if written_secrets is None and what in ("skills", "agents"):
+        print("Skills are installed. Run this again and choose MCP when you want to connect Trading Wiser.")
     return 0
 
 
@@ -284,7 +325,7 @@ def _interactive(args: argparse.Namespace) -> int:
     print("Only an onboarded, approved user should continue.")
     what = args.what or _choose(
         "What should I install?",
-        [("mcp", "MCP server"), ("agents", "Agents"), ("both", "MCP server and agents")],
+        [("mcp", "MCP server"), ("skills", "Skills"), ("both", "MCP server and skills")],
         default="both",
     )
     client = args.client or _choose(
@@ -297,7 +338,7 @@ def _interactive(args: argparse.Namespace) -> int:
         ],
     )
     scope = args.scope
-    if scope is None and client in ("cursor", "claude-code"):
+    if scope is None and client in ("cursor", "claude-code", "codex"):
         scope = _choose(
             "Where should this apply?",
             [("project", "This project only"), ("user", "All projects for this user")],
@@ -320,11 +361,11 @@ def _interactive(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="ai-momentum-analyzer",
-        description="Set up the Trading Wiser MCP server and agents. Run with no arguments for a guided setup.",
+        description="Set up the Trading Wiser MCP server and skills. Run with no arguments for a guided setup.",
     )
     sub = parser.add_subparsers(dest="command")
-    install = sub.add_parser("install", help="Install the MCP server, the agents, or both")
-    install.add_argument("what", nargs="?", choices=["mcp", "agents", "both"])
+    install = sub.add_parser("install", help="Install the MCP server, skills, or both")
+    install.add_argument("what", nargs="?", choices=["mcp", "skills", "agents", "both"])
     install.add_argument("--client", choices=CLIENTS)
     install.add_argument("--scope", choices=["project", "user"])
     install.add_argument("--target", default=".", help="Project directory for project-scoped install")
@@ -335,8 +376,8 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Read the password from stdin instead of a hidden prompt.",
     )
-    legacy = sub.add_parser("install-agents", help="Copy agents into a project")
-    legacy.add_argument("--client", choices=("cursor", "claude", "claude-code"))
+    legacy = sub.add_parser("install-agents", help="Legacy alias: copy portable skills into a project")
+    legacy.add_argument("--client", choices=("cursor", "claude", "claude-code", "codex"))
     legacy.add_argument("--target", default=".")
 
     args = parser.parse_args(argv)
@@ -354,7 +395,7 @@ def main(argv: list[str] | None = None) -> int:
         args.password = password
         if not args.what or not args.client:
             return _interactive(args)
-        scope = args.scope or ("user" if args.client in ("claude-desktop", "codex") else "project")
+        scope = args.scope or ("user" if args.client == "claude-desktop" else "project")
         return _run_install(
             args.what,
             args.client,
@@ -367,7 +408,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     if args.command == "install-agents":
         client = "claude-code" if args.client == "claude" else args.client
-        written = install_agents(client, Path(args.target).resolve())
+        written = install_skills(client, Path(args.target).resolve())
         for path in written:
             print(path)
         return 0 if written else 1

@@ -1,4 +1,4 @@
-"""Bump the version in pyproject.toml. Prints the new version."""
+"""Bump the package, plugin, and MCP server versions. Prints the new version."""
 
 from __future__ import annotations
 
@@ -28,10 +28,43 @@ def bump_file(path: Path, bump: str) -> str:
         raise SystemExit(f"No version field in {path}")
     current = ".".join(found.groups())
     updated = next_version(current, bump)
-    path.write_text(
-        VERSION_RE.sub(f'version = "{updated}"', text, count=1),
-        encoding="utf-8",
-    )
+    path.write_text(VERSION_RE.sub(f'version = "{updated}"', text, count=1), encoding="utf-8")
+    for manifest in (
+        path.parent / "plugin.json",
+        path.parent / ".claude-plugin" / "plugin.json",
+    ):
+        if manifest.exists():
+            manifest_text = manifest.read_text(encoding="utf-8")
+            manifest_text, count = re.subn(
+                r'("version"\s*:\s*")\d+\.\d+\.\d+("\s*,?)',
+                rf'\g<1>{updated}\g<2>',
+                manifest_text,
+                count=1,
+            )
+            if count:
+                manifest.write_text(manifest_text, encoding="utf-8")
+    package_version = path.parent / "ai_momentum_analyzer" / "__init__.py"
+    if package_version.exists():
+        package_text = package_version.read_text(encoding="utf-8")
+        package_text, count = re.subn(
+            r'(__version__\s*=\s*")\d+\.\d+\.\d+("\s*)',
+            rf'\g<1>{updated}\g<2>',
+            package_text,
+            count=1,
+        )
+        if count:
+            package_version.write_text(package_text, encoding="utf-8")
+    server_file = path.parent / "mcp_servers" / "tradingwiser" / "server.py"
+    if server_file.exists():
+        server_text = server_file.read_text(encoding="utf-8")
+        server_text, count = re.subn(
+            r'("serverInfo"\s*:\s*\{"name"\s*:\s*SERVER_NAME,\s*"version"\s*:\s*")\d+\.\d+\.\d+("\})',
+            rf'\g<1>{updated}\g<2>',
+            server_text,
+            count=1,
+        )
+        if count:
+            server_file.write_text(server_text, encoding="utf-8")
     return updated
 
 

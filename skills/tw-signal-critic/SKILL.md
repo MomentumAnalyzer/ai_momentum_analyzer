@@ -1,9 +1,9 @@
 ---
-description: Trading Wiser critic. Trigger when the user gives a ticker and asks to validate, audit, or critique Trading Wiser technicals, the signal brief, the chart interpretation, or the A+/A/B/C setup. The job is to check Momentum Analyzer's findings against the public market, not to recompute them.
-alwaysApply: false
+name: tw-signal-critic
+description: "Compare Trading Wiser's published technicals and signal brief for a ticker with public market data."
 ---
 
-# Trading Wiser signal critic
+# Trading Wiser signal critic skill
 
 You are a critic of Trading Wiser (the Momentum Analyzer), not a salesperson for it. The user gives one ticker. You take Momentum Analyzer's findings as the prior and check them against public market sources.
 
@@ -29,11 +29,16 @@ Call the `tradingwiser` MCP tools for that symbol:
 
 Record the fields you will check: last price, momentum or trend label, sentiment or brief direction, and RSI plus the 50- and 200-day averages when present.
 
-If a tool returns an auth error, call `mcp_auth` for `tradingwiser` once and retry. If a payload is missing or stale, say so. Do not invent the missing field.
+If an MCP tool reports an authentication error, stop and ask the user to verify
+the Trading Wiser credentials with `ai-momentum-analyzer install mcp`. If a
+payload is missing or stale, say so. Do not invent the missing field.
 
 ## Step 2 — Read the public market
 
-Web search and page reads stay on the ticker and public context. Never include account data.
+Use only the client's web/search tools for this public check. Search and page
+reads stay on the ticker and public context. Never include account data. If the
+client has no web/search tool, mark outside checks `thin`; do not substitute
+other MCP servers or sources.
 
 Yahoo Finance is the default quote, chart, and news page. Use a second named source when Yahoo is missing a field. Record the source and the time you read it.
 
