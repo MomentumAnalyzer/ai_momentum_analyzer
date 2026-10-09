@@ -1,6 +1,12 @@
 {
-  "name": "trading-wiser",
-  "description": "Trading Wiser skills for Claude Code. Configure the Trading Wiser MCP server separately with ai-momentum-analyzer.",
-  "version": "0.4.0",
-  "author": {"name": "Trading Wiser"}
+  "name": "momentum-analyzer",
+  "description": "Momentum Analyzer by Trading Wiser. Uses the hosted MCP at https://momentum-analyzer.com/mcp.",
+  "version": "0.5.0",
+  "author": {
+    "name": "Trading Wiser",
+    "url": "https://momentum-analyzer.com"
+  },
+  "homepage": "https://momentum-analyzer.com",
+  "repository": "https://github.com/MomentumAnalyzer/ai_momentum_analyzer",
+  "license": "LicenseRef-Proprietary"
 }

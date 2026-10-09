@@ -1,8 +1,29 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "trading-wiser",
-  "version": "0.4.0",
-  "description": "Trading Wiser workflows for holdings reviews, signal critiques, and detailed zone reports.",
-  "author": {"name": "Trading Wiser"},
-  "skills": "./skills/"
+  "name": "momentum-analyzer",
+  "version": "0.5.0",
+  "description": "Momentum Analyzer by Trading Wiser: hosted MCP for grades, zones, flows, and sentiment.",
+  "author": {
+    "name": "Trading Wiser",
+    "url": "https://momentum-analyzer.com"
+  },
+  "homepage": "https://momentum-analyzer.com",
+  "repository": "https://github.com/MomentumAnalyzer/ai_momentum_analyzer",
+  "license": "LicenseRef-Proprietary",
+  "keywords": ["momentum", "trading", "markets"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Momentum Analyzer",
+        "shortDescription": "Momentum Analyzer data inside ChatGPT and Codex.",
+        "longDescription": "Trading Wiser publishes Momentum Analyzer. This plugin connects to the hosted MCP server at https://momentum-analyzer.com/mcp.",
+        "developerName": "Trading Wiser",
+        "category": "Productivity",
+        "websiteURL": "https://momentum-analyzer.com",
+        "supportURL": "https://momentum-analyzer.com",
+        "privacyPolicyURL": "https://momentum-analyzer.com/privacy",
+        "termsOfServiceURL": "https://momentum-analyzer.com/terms"
+      }
+    }
+  }
 }
