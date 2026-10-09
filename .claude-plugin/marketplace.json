@@ -1,0 +1,14 @@
+{
+  "name": "momentum-analyzer",
+  "description": "Momentum Analyzer by Trading Wiser.",
+  "owner": {
+    "name": "Trading Wiser"
+  },
+  "plugins": [
+    {
+      "name": "momentum-analyzer",
+      "source": "./",
+      "description": "Momentum Analyzer by Trading Wiser. Uses the hosted MCP at https://momentum-analyzer.com/mcp."
+    }
+  ]
+}
