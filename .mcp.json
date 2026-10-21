@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "momentum-analyzer": {
+    "ma": {
       "type": "http",
       "url": "https://momentum-analyzer.com/mcp"
     }

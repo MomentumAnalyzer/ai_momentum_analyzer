@@ -7,8 +7,17 @@ server at https://momentum-analyzer.com/mcp.
 This package is proprietary. No license is granted to copy, modify,
 sublicense, or distribute it except by the copyright holder.
 
-Access to the hosted service is not public. Only a person who has been
-explicitly onboarded and approved by the operator may use it. Possession of
-this plugin, a download, or a client config does not grant that approval.
+Access to the hosted service. The hosted Momentum Analyzer service at
+https://momentum-analyzer.com is available to anyone who creates an account,
+subject to the Momentum Analyzer Terms & Conditions
+(https://momentum-analyzer.com/terms) and the limits of the account's plan,
+including the free tier described at https://momentum-analyzer.com/pricing.
+This repository does not grant any right to use the hosted service beyond
+those Terms. Trading Wiser may suspend or end access that breaks the Terms
+or plan limits. Possession of this plugin, a download, or a client config
+does not by itself grant access to the service; an account is required.
+
+You may install and use these manifests unmodified to connect an MCP client
+to the hosted service.
 
 This repository contains no credentials, no private app code, and no database.
